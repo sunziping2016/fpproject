@@ -1,0 +1,4 @@
+.stack-work/
+doc/haddock/
+fpproject.cabal
+*~
