@@ -20,7 +20,7 @@ data Value
 --                          } deriving (Show, Eq)
 type ValueMap = M.Map String Value
 
-data Context = Context { map :: ValueMap } deriving (Show, Eq)
+data Context = Context { runContext :: ValueMap } deriving (Show, Eq)
 type ContextState a = StateT Context Maybe a
 
 data TEnv = TEnv ValueMap deriving (Show, Eq)
@@ -57,12 +57,16 @@ eval (ENot e) = do
   return (VBool $ not b)
 eval (EAnd e1 e2) = do
   b1 <- getBool e1
-  b2 <- getBool e2
-  return (VBool $ and [b1, b2])
+  if b1 then do
+    b2 <- getBool e2
+    return $ VBool b2
+  else return $ VBool False
 eval (EOr e1 e2) = do
   b1 <- getBool e1
-  b2 <- getBool e2
-  return (VBool $ or [b1, b2])
+  if not b1 then do
+    b2 <- getBool e2
+    return $ VBool b2
+  else return $ VBool True
 eval (EAdd e1 e2) = do
   i1 <- getInt e1
   i2 <- getInt e2
@@ -101,6 +105,7 @@ eval (EEq e1 e2) = do
     VChar x -> do c1 <- return x
                   c2 <- getChar e2
                   return (VBool $ c1 == c2)
+    _ -> lift Nothing
 eval (ENeq e1 e2) = do
   ev <- eval e1
   case ev of
@@ -171,7 +176,7 @@ eval _ = undefined
 withVar :: String -> Value -> ContextState a -> ContextState a
 withVar n v op = do
     env <- get --save current state
-    modify $ M.insert n v
+    modify $ (Context . M.insert n v . runContext)
     r <- op
     put env -- recover state
     return r
@@ -181,7 +186,7 @@ withVar n v op = do
 
 evalProgram :: Program -> Maybe Value
 evalProgram (Program adts body) = evalStateT (eval body) $
-  Context {  } -- 可以用某种方式定义上下文，用于记录变量绑定状态
+  Context { runContext = M.empty } -- 可以用某种方式定义上下文，用于记录变量绑定状态
 
 
 evalValue :: Program -> Result
