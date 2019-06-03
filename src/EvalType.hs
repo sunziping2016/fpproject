@@ -19,6 +19,8 @@ isBool e = do
 
 eval :: Expr -> ContextState Type
 eval (EBoolLit _) = return TBool
+eval (EIntLit _) = return TInt
+eval (ECharLit _) = return TChar
 eval (ENot e) = isBool e >> return TBool
 -- ... more
 eval _ = undefined

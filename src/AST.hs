@@ -7,10 +7,9 @@ module AST
   , Program (..)
   , Result (..) ) where
 
-
 -- |你的语言里的类型（type），包括基本数据类型、函数类型以及代数数据类型。
 data Type
-  
+
   = TBool
   -- ^布尔类型。
 
@@ -25,7 +24,6 @@ data Type
 
   | TData String
   -- ^代数数据类型。@TData adtName@ 中的 @adtName@ 是该类型的名称。
-
   deriving (Show, Eq)
 
 
@@ -45,13 +43,13 @@ data Pattern
   -- ^变量模式。
   --
   -- 用 Haskell 语法粗略描述，
-  -- 
+  --
   -- @
   -- fac n = case n of
   --   0 -> 1
   --   x -> x * fac (x-1)
   -- @
-  -- 
+  --
   -- 其中 @->@ 左侧的 @x@ 相当于 @PVar "x"@，@->@ 右侧的 @x@ 相当于 @EVar "x"@。@0 -> 1@ 则对应 @PIntLit 0@ 和 @EIntLit 1@。
 
 
@@ -63,26 +61,26 @@ data Pattern
 
 -- |你的语言里的表达式（expression），包括基本数据类型字面量、基本数据类型之间的运算、条件语句、let-In 表达式、lambda 表达式、函数定义、代数数据类型定义。你的语言里每一个合法的表达式都有一个类型和一个值；你的语言里的类型是 Haskell 里 @Type@ 类型的变量。
 data Expr
-  
+
   = EBoolLit Bool
   -- ^布尔类型字面量（literal）。
-  
+
   | EIntLit Int
   -- ^有限精度整数类型字面量。
-  
+
   | ECharLit Char
   -- ^字符类型字面量。
 
   | ENot Expr
   -- ^逻辑取反表达式。@ENot e@ 中的 @e@ 必须是一个类型为 @TBool@ 的表达式，否则不 well-typed。该表达式的类型为 @TBool@，值为 @e@ 的值取反。
-  
+
   | EAnd Expr Expr
   -- ^逻辑“且”表达式。@EAnd e1 e2@ 中的 @e1@ 和 @e2@ 都必须是类型为 @TBool@ 的表达式，否则不 well-typed。
   --
   -- 该表达式的类型为 @TBool@，值为 @e1@ 和 @e2@ 的值的逻辑“且”。
   --
   -- 对该表达式的求值必须具有短路特性，即当 @e1@ 值为 @False@ 时，不求 @e2@ 的值，直接返回 @False@。
-  
+
   | EOr Expr Expr
   -- ^逻辑“或”表达式。@EOr e1 e2@ 中的 @e1@ 和 @e2@ 都必须是类型为 @TBool@ 的表达式，否则不 well-typed。
   --
@@ -128,17 +126,17 @@ data Expr
   -- ^布尔、有限精度整数、字符“不等”表达式。@ENeq e1 e2@ 中 @e1@ 和 @e2@ 的类型相同，且为 @TBool@ 、@TInt@、@TChar@ 三者之一，否则不 well-typed。
   --
   -- 该表达式的类型为 @TBool@，当 @e1@ 和 @e2@ 的值相等时，值为 @False@ ，否则为 @True@ 。
-  
+
   | ELt Expr Expr
   -- ^小于比较表达式。@ELt e1 e2@ 中 @e1@ 和 @e2@ 的类型相同，且为 @TInt@、@TChar@ 两者之一，否则不 well-typed。
   --
   -- 该表达式的类型为 @TBool@，当 @e1@ 的值小于 @e2@ 的值时，值为 @True@ ，否则为 @False@ 。字符按其 Unicode 来比较（和 Haskell 相同）。
-  
+
   | EGt Expr Expr
   -- ^大于比较表达式。@EGt e1 e2@ 中 @e1@ 和 @e2@ 的类型相同，且为 @TInt@、@TChar@ 两者之一，否则不 well-typed。
   --
   -- 该表达式的类型为 @TBool@，当 @e1@ 的值大于 @e2@ 的值时，值为 @True@ ，否则为 @False@ 。字符按其 Unicode 来比较（和 Haskell 相同）。
-  
+
   | ELe Expr Expr
   -- ^小于等于比较表达式。@ELe e1 e2@ 中 @e1@ 和 @e2@ 的类型相同，且为 @TInt@、@TChar@ 两者之一，否则不 well-typed。
   --
@@ -172,24 +170,24 @@ data Expr
   -- ^针对函数定义的 @Let In@ 表达式。@ELetRec f (x, tx) (e1, ty) e2@ 中，其中 @f@ 表示函数名，@(x, tx)@ 表示参数名和参数类型，@(e1, ty)@ 表示函数体和返回值类型。该表达式会创建一个从函数名到函数体的绑定，这个绑定值的类型为 @TArrow tx ty@；@e2@ 是该绑定的作用域。用 Haskell 语法粗略表示为 @let f = ((\x -> e1) :: tx -> ty) in e2@。
   --
   -- 该表达式的类型为 @e2@ 的类型，值为 @e2@ 的值。
-  -- 
+  --
   -- 使用 @ELetRec@ 与使用 @ELet@ + @ELambda@ 的区别在于：函数体 @e1@ 中允许引用正在被定义的函数 @f@。从而可以定义递归的函数。
 
   | EVar String
   -- ^变量表达式。@EVar n@ 的类型为 @n@ 所绑定到的表达式的类型，值为 @n@ 所绑定到的表达式的值。 @n@ 到表达式的绑定关系由 @ELambda@、@ELet@、@ELetRec@ 创建。
-  -- 
+  --
   -- 如果你实现了模式匹配，绑定关系也会由模式匹配创建。
 
   | EApply Expr Expr
   -- ^函数应用表达式。@EApply e1 e2@ 中，@e1@ 的类型为函数类型，即某个 @TArrow T0 T1@ ，第二个 @Expr@ 的类型为 @T0@ ，否则不 well-typed。
-  -- 
+  --
   -- 该表达式的类型为 @T1@ ，值为将 @e1@ 的值应用到 @e2@ 的值上得到的值。
-  -- 
+  --
   -- 如果实现了代数数据类型的支持，@e1@ 也可以是代数数据类型的构造函数（data constructor）。
 
   | ECase Expr [(Pattern, Expr)]
   -- ^模式匹配表达式。@ECase e0 [(p1, e1),(p2, e2),...]@ 中，@e0@ 为被匹配的表达式，之后的 @[(p1, e1),(p2, e2),...]@ 表示若干个 模式-表达式 对儿。这里 @e1,e2,...@ 的类型必须相同，且 @p1,p2,...@ 必须与 @e0@ 的类型匹配，否则不 well-typed。
-  -- 
+  --
   -- 该表达式的类型为 @e1@ 的类型，值为第一个匹配上的模式对应的表达式的值。
   --
   -- 如果你要实现的语言不支持模式匹配，就不用管这个构造函数。
@@ -198,7 +196,7 @@ data Expr
 
 
 -- |代数数据类型定义。
--- 
+--
 -- @ADT T [(D1, [t11, t12, ...]), (D2, [t21, t22, ...]), ...]@ 表示定义了一个名为 @T@（的值）的代数数据类型，具有若干个构造函数 @D1, D2, ...@，且第 i 个构造函数的参数类型为 @ti1, ti2, ...@。
 --
 -- 如果你要实现的语言不支持代数数据类型，就不用管这个类型。
@@ -206,7 +204,7 @@ data ADT = ADT String [(String, [Type])] deriving (Show, Eq)
 
 
 -- |程序(Program)，一个 @Program@ 由代数数据类型的定义 @[ADT]@ 以及程序体 @Expr@ 构成。
--- 
+--
 -- 对于没有 ADT 定义的程序，或未支持 ADT 的语言，将 @[ADT]@ 列表留空即可。
 data Program = Program [ADT] Expr deriving (Show, Eq)
 
@@ -216,13 +214,13 @@ data Result
 
   = RBool Bool
   -- ^存放布尔类型求值结果。
-  
+
   | RInt Int
   -- ^存放有限精度整数类型求值结果。
-  
+
   | RChar Char
   -- ^存放字符类型求值结果。
-  
+
   | RInvalid
   -- ^不合法的求值结果，包括 1. 求值发生错误；2. 求值结果并非布尔类型、有限精度整数类型、字符类型。
 
