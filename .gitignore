@@ -1,4 +1,5 @@
 .stack-work/
+.HTF/
 doc/haddock/
 fpproject.cabal
 *~

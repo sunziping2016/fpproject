@@ -25,6 +25,7 @@ dependencies:
 - mtl
 - containers
 - megaparsec
+- parser-combinators
 
 library:
   source-dirs: src
@@ -43,7 +44,16 @@ executables:
 tests:
   fpproject-test:
     main:                Spec.hs
-    source-dirs:         test
+    source-dirs:         test/BaseTest
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - fpproject
+  parser-test:
+    main:                ParserTest.hs
+    source-dirs:         test/ParserTest
     ghc-options:
     - -threaded
     - -rtsopts
