@@ -319,8 +319,8 @@ expr_fact = EIf (EEq (EVar "x") (EIntLit 0))
     (EApply 
       (EVar "fact") 
       (ESub (EVar "x") (EIntLit 1))
-      )
     )
+  )
   
 tRaw_l21_ELetRec_0 = 
   Program [] $ ELetRec "fact" ("x", TInt) (expr_fact, TInt) (EApply (EVar "fact") (EIntLit 5))
@@ -367,8 +367,7 @@ callFun f (e:es) = callFun (EApply f e) es
 tRaw_00_aplusb =
   Program [] $
 
-  makeFun ("solution", TInt) [("a", TInt), ("b", TInt)]
-  (
+  makeFun ("solution", TInt) [("a", TInt), ("b", TInt)](
     EAdd (EVar "a") (EVar "b")
   ) $
 
