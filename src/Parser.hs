@@ -1,7 +1,10 @@
 module Parser
 ( pExpr,
   pType,
-  pPattern
+  pPattern,
+  pADT,
+  Action(..),
+  pAction
 ) where
 
 -- from https://markkarpov.com/megaparsec/megaparsec.html
@@ -221,3 +224,44 @@ pPatternData = try $ do
   name <- pVariable
   patterns <- some pPatternExceptData
   return $ PData name patterns
+
+-- ADT parser
+pADT :: Parser ADT
+pADT = try $ do
+  pKeyword "data"
+  t <- pVariable
+  symbol "="
+  ds <- (flip sepBy) (symbol "|") . try $ do
+    d <- pVariable
+    ts <- many . try $ pType
+    return (d, ts)
+  return $ ADT t ds
+
+-- Action Parser
+data Action
+  = AType Expr
+  | AEval Expr
+  | AADT ADT
+  deriving (Show, Eq)
+
+pActionType :: Parser Action
+pActionType = try $ do
+  pKeyword ":t"
+  expr <- pExpr
+  return $ AType expr
+
+pActionADT :: Parser Action
+pActionADT = try $ do
+  adt <- pADT
+  return $ AADT adt
+
+pActionEval :: Parser Action
+pActionEval = try $ do
+  expr <- pExpr
+  return $ AEval expr
+
+pAction :: Parser Action
+pAction = choice
+  [ pActionType
+  , pActionADT
+  , pActionEval ]

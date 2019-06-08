@@ -7,7 +7,7 @@ import Text.Printf
 import qualified Data.Map.Internal as M
 import System.IO
 
-data Context = Context {t :: Maybe Type} 
+data Context = Context {} 
   deriving (Show,Eq)
 
 type ContextState a = StateT Context Maybe a 

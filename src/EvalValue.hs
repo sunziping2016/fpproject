@@ -16,16 +16,10 @@ data Value
   | VAdtFun String [Value] Int
   deriving (Show, Eq)
 
---data Context = Context { -- 可以用某种方式定义上下文，用于记录变量绑定状态
---                          } deriving (Show, Eq)
 type ValueMap = M.Map String Value
 
-data Context = Context { runContext :: ValueMap } deriving (Show, Eq)
-type ContextState a = StateT Context Maybe a
-
-data TEnv = TEnv ValueMap deriving (Show, Eq)
-type Ctx a = StateT TEnv (Either String) a
-
+data Context = Context { getVars :: ValueMap } deriving (Show, Eq)
+type ContextState = StateT Context Maybe
 
 getBool :: Expr -> ContextState Bool
 getBool e = do
@@ -176,7 +170,7 @@ eval _ = undefined
 withVar :: String -> Value -> ContextState a -> ContextState a
 withVar n v op = do
     env <- get --save current state
-    modify $ (Context . M.insert n v . runContext)
+    modify $ (Context . M.insert n v . getVars)
     r <- op
     put env -- recover state
     return r
@@ -186,7 +180,7 @@ withVar n v op = do
 
 evalProgram :: Program -> Maybe Value
 evalProgram (Program adts body) = evalStateT (eval body) $
-  Context { runContext = M.empty } -- 可以用某种方式定义上下文，用于记录变量绑定状态
+  Context { getVars = M.empty } -- 可以用某种方式定义上下文，用于记录变量绑定状态
 
 
 evalValue :: Program -> Result
