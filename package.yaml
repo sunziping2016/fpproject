@@ -42,7 +42,7 @@ executables:
     - fpproject
 
 tests:
-  fpproject-test:
+  base-test:
     main:                Spec.hs
     source-dirs:         test/BaseTest
     ghc-options:

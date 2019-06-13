@@ -1,5 +1,7 @@
 -- | 这是其中一种实现方式的代码框架。你可以参考它，或用你自己的方式实现，只要按需求完成 evalValue :: Program -> Result 就行。
-module EvalValue where
+module EvalValue
+( evalValue
+) where
 
 import AST
 import Control.Monad.State
@@ -78,15 +80,13 @@ eval (EDiv e1 e2) = do
   i2 <- getInt e2
   case i2 of
     0 -> lift Nothing
-    _ -> return i2
-  return (VInt $ i1 `div` i2)
+    _ -> return (VInt $ i1 `div` i2)
 eval (EMod e1 e2) = do
   i1 <- getInt e1
   i2 <- getInt e2
   case i2 of
     0 -> lift Nothing
-    _ -> return i2
-  return (VInt $ i1 `mod` i2)
+    _ -> return (VInt $ i1 `mod` i2)
 eval (EEq e1 e2) = do
   ev <- eval e1
   case ev of
@@ -151,14 +151,8 @@ eval (EGe e1 e2) = do
 eval (EIf e1 e2 e3) = do
   cond <- getBool e1
   case cond of
-    True -> do ev <- eval e2
-               case ev of
-                 VInt x -> return (VInt x)
-                 VChar x -> return (VChar x)
-    False -> do ev <- eval e3
-                case ev of
-                  VInt x -> return (VInt x)
-                  VChar x -> return (VChar x)
+    True -> eval e2
+    False -> eval e3
 --eval (ELambda (pn, pt) e) = do
 eval (ELet (n, e1) e2) = do
   v1 <- eval e1
@@ -166,22 +160,17 @@ eval (ELet (n, e1) e2) = do
 -- ... more
 eval _ = undefined
 
-
 withVar :: String -> Value -> ContextState a -> ContextState a
 withVar n v op = do
-    env <- get --save current state
-    modify $ (Context . M.insert n v . getVars)
-    r <- op
-    put env -- recover state
-    return r
-
-
-
+  env <- get --save current state
+  modify $ Context . M.insert n v . getVars
+  r <- op
+  put env -- recover state
+  return r
 
 evalProgram :: Program -> Maybe Value
 evalProgram (Program adts body) = evalStateT (eval body) $
   Context { getVars = M.empty } -- 可以用某种方式定义上下文，用于记录变量绑定状态
-
 
 evalValue :: Program -> Result
 evalValue p = case evalProgram p of

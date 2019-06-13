@@ -6,6 +6,7 @@ import System.Timeout(timeout)
 import AST
 import Parser
 import Text.Megaparsec
+import Text.Megaparsec.Char
 
 addTimeout test = timeout (3*10^6) test >>= assertJustVerbose "3 seconds timeout exceeded"
 testsWithTimeouts = wrap addTimeout htf_thisModulesTests
