@@ -5,9 +5,7 @@ module EvalType
 
 import AST
 import Control.Monad.State
-import Text.Printf
 import qualified Data.Map.Strict as M
-import System.IO
 
 type ValueMap = M.Map String Type
 
@@ -112,15 +110,10 @@ eval (ELet (n, x) y) = do
   t1 <- eval x
   withVar n t1 $ eval y
 
--- eval (ELetRec f (x, tx) (y, ty) e) = do
---   ytype <- eval ((x, tx) : (f ,(TArrow tx ty)) : env) y
---   getE <- eval ((x, tx) : (f ,(TArrow tx ty)) : env) e
---   return ytype
-
 eval (ELetRec f (x, tx) (y, ty) e) = do
   ytype <- withVars [(x, tx), (f, TArrow tx ty)] $ eval y
   if ytype == ty
-    then withVar f (TArrow tx ty) $ eval y
+    then withVar f (TArrow tx ty) $ eval e
     else lift Nothing
 
 eval (EVar n) = findVar n
@@ -160,12 +153,10 @@ findVar n = do
 -- fromList [('a', TInt), ('b', TBool)] !? 'a' == TInt
 -- fromList [(5, 'a'), (3, 'b')] !? 5 == Just 'a'  吧ELambda等中的绑定关系保存到列表当中，使用!?进行搜索
 -- 比如 fromList[('Ha', TBool)] !? 'Ha' = TBool
-  
-
 
 -- ... more 
 -- eval _ = undefined
 
 evalType :: Program -> Maybe Type
 evalType (Program adts body) = evalStateT (eval body) $
-  Context { getVars = M.empty } 
+  Context { getVars = M.empty }
