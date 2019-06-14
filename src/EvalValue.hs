@@ -7,6 +7,7 @@ import AST
 import Control.Monad.State
 import qualified Data.Map.Strict as M
 import Prelude hiding (getChar)
+import Debug.Trace
 
 data Value
   = VBool Bool
@@ -153,12 +154,36 @@ eval (EIf e1 e2 e3) = do
   case cond of
     True -> eval e2
     False -> eval e3
---eval (ELambda (pn, pt) e) = do
+eval (ELambda (pn, pt) e) = do
+  env <- get
+  return $ VClosure env pn e
 eval (ELet (n, e1) e2) = do
   v1 <- eval e1
   withVar n v1 $ eval e2
+eval (ELetRec f (x, tx) (y, ty) e) = do
+  env <- get
+  let fun = VFun f env x y
+  withVar f fun $ eval e
+eval (EVar n) = findVar n
+eval (EApply e1 e2) = do
+  f <- eval e1
+  p <- eval e2
+  case f of
+    VClosure env n b ->
+      withAltCtx (Context . M.insert n p . getVars $ env) $ eval b
+    VFun nf env np b ->
+      withAltCtx (Context . M.insert np p . M.insert nf f. getVars $ env) $ eval b
+    _ -> lift Nothing
 -- ... more
 eval _ = undefined
+
+withAltCtx :: Context -> ContextState a -> ContextState a
+withAltCtx c op = do
+  env <- get
+  put c
+  r <- op
+  put env
+  return r
 
 withVar :: String -> Value -> ContextState a -> ContextState a
 withVar n v op = do
@@ -168,8 +193,13 @@ withVar n v op = do
   put env -- recover state
   return r
 
+findVar :: String -> ContextState Value
+findVar n = do
+  env <- get
+  lift $ M.lookup n (getVars env)
+
 evalProgram :: Program -> Maybe Value
-evalProgram (Program adts body) = evalStateT (eval body) $
+evalProgram (Program adts body) = evalStateT (trace ("Program:" ++ show body) $ eval body) $
   Context { getVars = M.empty } -- 可以用某种方式定义上下文，用于记录变量绑定状态
 
 evalValue :: Program -> Result
