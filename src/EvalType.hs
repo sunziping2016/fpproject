@@ -1,4 +1,3 @@
--- | 这是其中一种实现方式的代码框架。你可以参考它，或用你自己的方式实现，只要按需求完成 evalType :: Program -> Maybe Type 就行。
 module EvalType
 ( evalType
 ) where
@@ -128,6 +127,8 @@ eval (EApply x y) = do
         else lift Nothing
     _ -> lift Nothing
 
+eval _ = undefined
+
 withVar :: String -> Type -> ContextState a -> ContextState a
 withVar n t op = do
   env <- get
@@ -149,13 +150,6 @@ findVar n = do
   env <- get
   lift $ M.lookup n (getVars env)
 
--- @let f = ((\x -> e1) :: tx -> ty) in e2@。
--- fromList [('a', TInt), ('b', TBool)] !? 'a' == TInt
--- fromList [(5, 'a'), (3, 'b')] !? 5 == Just 'a'  吧ELambda等中的绑定关系保存到列表当中，使用!?进行搜索
--- 比如 fromList[('Ha', TBool)] !? 'Ha' = TBool
-
--- ... more 
--- eval _ = undefined
 
 evalType :: Program -> Maybe Type
 evalType (Program adts body) = evalStateT (eval body) $

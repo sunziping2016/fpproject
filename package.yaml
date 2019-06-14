@@ -51,6 +51,15 @@ tests:
     - -with-rtsopts=-N
     dependencies:
     - fpproject
+  adt-test:
+    main:                ADTTest.hs
+    source-dirs:         test/ADTTest
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - fpproject
   parser-test:
     main:                ParserTest.hs
     source-dirs:         test/ParserTest

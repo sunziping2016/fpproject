@@ -1,4 +1,3 @@
--- | 这是其中一种实现方式的代码框架。你可以参考它，或用你自己的方式实现，只要按需求完成 evalValue :: Program -> Result 就行。
 module EvalValue
 ( evalValue
 ) where
@@ -15,8 +14,6 @@ data Value
   | VChar Char
   | VClosure Context String Expr
   | VFun String Context String Expr
-  | VAdt String [Value]
-  | VAdtFun String [Value] Int
   deriving (Show, Eq)
 
 type ValueMap = M.Map String Value
@@ -174,7 +171,6 @@ eval (EApply e1 e2) = do
     VFun nf env np b ->
       withAltCtx (Context . M.insert np p . M.insert nf f. getVars $ env) $ eval b
     _ -> lift Nothing
--- ... more
 eval _ = undefined
 
 withAltCtx :: Context -> ContextState a -> ContextState a
@@ -200,7 +196,7 @@ findVar n = do
 
 evalProgram :: Program -> Maybe Value
 evalProgram (Program adts body) = evalStateT (trace ("Program:" ++ show body) $ eval body) $
-  Context { getVars = M.empty } -- 可以用某种方式定义上下文，用于记录变量绑定状态
+  Context { getVars = M.empty }
 
 evalValue :: Program -> Result
 evalValue p = case evalProgram p of
