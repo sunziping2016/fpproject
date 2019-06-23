@@ -89,7 +89,7 @@ tRaw_02_ELambda_result = Right expr_Int_succ_bad
 
 tRaw_01_ELet_text = "let x = 1 in x + 1"
 tRaw_01_ELet_result = Right $ ELet ("x", (EIntLit 1)) (EAdd (EVar "x") (EIntLit 1))
-tRaw_01_ELetRec_text = "let x = \\x :: TInt => 1 :: TInt in x"
+tRaw_01_ELetRec_text = "letrec x = \\x :: TInt => 1 :: TInt in x"
 tRaw_01_ELetRec_result = Right $ ELet ("x", (EIntLit 1)) (EAdd (EVar "x") (EIntLit 1))
 
 

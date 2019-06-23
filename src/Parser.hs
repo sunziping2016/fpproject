@@ -80,10 +80,10 @@ operatorTable =
     , InfixL (EMod   <$ symbol "%") ]
   , [ InfixL (EAdd   <$ symbol "+" )
     , InfixL (ESub   <$ symbol "-" ) ]
-  , [ InfixL (ELt    <$ symbol "<")
-    , InfixL (EGt    <$ symbol ">")
-    , InfixL (ELe    <$ symbol "<=")
-    , InfixL (EGe    <$ symbol ">=") ]
+  , [ InfixL (ELe    <$ symbol "<=")
+    , InfixL (EGe    <$ symbol ">=")
+    , InfixL (ELt    <$ symbol "<")
+    , InfixL (EGt    <$ symbol ">") ]
   , [ InfixL (EEq    <$ symbol "==")
     , InfixL (ENeq   <$ symbol "!=") ]
   , [ InfixL (EAnd   <$ symbol "&&") ]
