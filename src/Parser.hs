@@ -39,10 +39,10 @@ pSubExpr :: Parser Expr
 pSubExpr = between (symbol "(") (symbol ")") pExpr
 
 pBoolLitTrue :: Parser Expr
-pBoolLitTrue = EBoolLit True <$ symbol "True"
+pBoolLitTrue = EBoolLit True <$ pKeyword "True"
 
 pBoolLitFalse :: Parser Expr
-pBoolLitFalse = EBoolLit False <$ symbol "False"
+pBoolLitFalse = EBoolLit False <$ pKeyword "False"
 
 pIntLitPositive :: Parser Expr
 pIntLitPositive = EIntLit <$> lexeme L.decimal
@@ -74,6 +74,7 @@ pExpr = makeExprParser pTerm operatorTable
 operatorTable :: [[Operator Parser Expr]]
 operatorTable =
   [ [ Prefix (ENot   <$ symbol "!") ]
+  , [ InfixL (EApply <$ symbol "$") ]
   , [ InfixL (EMul   <$ symbol "*")
     , InfixL (EDiv   <$ symbol "/")
     , InfixL (EMod   <$ symbol "%") ]
@@ -86,8 +87,7 @@ operatorTable =
   , [ InfixL (EEq    <$ symbol "==")
     , InfixL (ENeq   <$ symbol "!=") ]
   , [ InfixL (EAnd   <$ symbol "&&") ]
-  , [ InfixL (EOr    <$ symbol "||") ]
-  , [ InfixL (EApply <$ symbol "$") ] ]
+  , [ InfixL (EOr    <$ symbol "||") ] ]
 
 pIf :: Parser Expr
 pIf = try $ do
@@ -186,10 +186,10 @@ pSubPattern :: Parser Pattern
 pSubPattern = between (symbol "(") (symbol ")") pPattern
 
 pPatternBoolLitTrue :: Parser Pattern
-pPatternBoolLitTrue = PBoolLit True <$ symbol "True"
+pPatternBoolLitTrue = PBoolLit True <$ pKeyword "True"
 
 pPatternBoolLitFalse :: Parser Pattern
-pPatternBoolLitFalse = PBoolLit False <$ symbol "False"
+pPatternBoolLitFalse = PBoolLit False <$ pKeyword "False"
 
 pPatternIntLitPositive :: Parser Pattern
 pPatternIntLitPositive = PIntLit <$> lexeme L.decimal
@@ -231,7 +231,7 @@ pADT = try $ do
   pKeyword "data"
   t <- pVariable
   symbol "="
-  ds <- (flip sepBy) (symbol "|") . try $ do
+  ds <- (flip sepBy1) (symbol "|") . try $ do
     d <- pVariable
     ts <- many . try $ pType
     return (d, ts)

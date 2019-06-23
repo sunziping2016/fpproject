@@ -16,4 +16,8 @@ parsePExpr = parse (space *> pExpr <* eof) ""
 
 tRaw_01_EBoolLit_text = "True"
 tRaw_01_EBoolLit_result = Right $ EBoolLit True
+tRaw_02_EBoolLit_text = "Truea"
+tRaw_02_EBoolLit_result = Right $ EVar "Truea"
+
 test_01_EBoolLit = assertEqual (parsePExpr tRaw_01_EBoolLit_text) tRaw_01_EBoolLit_result
+test_02_EBoolLit = assertEqual (parsePExpr tRaw_02_EBoolLit_text) tRaw_02_EBoolLit_result
