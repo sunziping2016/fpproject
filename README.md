@@ -65,8 +65,8 @@ expr的运算符如下。注意：“$”运算符拥有最高优先级，且是
 | &&       | 2     | 左    |
 | ||       | 1     | 左    |
 
-
-
 parser不断读入statement，遇到是expr的求值，遇到是adt的，则存入全局状态中。
 
-## 
+## 测试
+
+通过`stack test :base-test`可以跑助教的测试。类似地，通过`stack test :parser-test`可以跑我们的parser的测试

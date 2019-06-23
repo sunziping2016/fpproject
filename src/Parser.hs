@@ -30,7 +30,7 @@ symbol = L.symbol sc
 -- Expression Parser
 
 pKeyword :: String -> Parser String
-pKeyword keyword = lexeme (string keyword <* notFollowedBy alphaNumChar)
+pKeyword keyword = lexeme (try $ string keyword <* notFollowedBy alphaNumChar)
 
 pVariable :: Parser String
 pVariable = lexeme ((:) <$> letterChar <*> many alphaNumChar <?> "identifier")
