@@ -34,7 +34,7 @@ pattern :=
     | (pattern)
     | True | False                      // Bool常量模式
     | 0 | 1 | -1 | ...                  // 整型常量模式包括非负数和负数
-    | id pattern1 pattern2 ...          // 代数数据类型模式，至少有一个子模式
+    | # id pattern1 pattern2 ...        // 代数数据类型模式，至少有一个子模式
     | id                                // 变量模式
 
 adt :=

@@ -74,7 +74,7 @@ pExpr = makeExprParser pTerm operatorTable
 operatorTable :: [[Operator Parser Expr]]
 operatorTable =
   [ [ Prefix (ENot   <$ symbol "!") ]
-  , [ InfixL (EApply <$ symbol "$") ]
+  , [ InfixL (EApply <$ symbol " :t case b of b => 1; c => 2;$") ]
   , [ InfixL (EMul   <$ symbol "*")
     , InfixL (EDiv   <$ symbol "/")
     , InfixL (EMod   <$ symbol "%") ]
@@ -221,6 +221,7 @@ pPatternExceptData = choice
 
 pPatternData :: Parser Pattern
 pPatternData = try $ do
+  symbol "#"
   name <- pVariable
   patterns <- some pPatternExceptData
   return $ PData name patterns
