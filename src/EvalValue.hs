@@ -195,7 +195,7 @@ findVar n = do
   lift $ M.lookup n (getVars env)
 
 evalProgram :: Program -> Maybe Value
-evalProgram (Program adts body) = evalStateT (trace ("Program:" ++ show body) $ eval body) $
+evalProgram (Program adts body) = evalStateT (eval body) $
   Context { getVars = M.empty }
 
 evalValue :: Program -> Result

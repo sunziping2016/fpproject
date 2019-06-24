@@ -7,14 +7,10 @@ import Control.Monad.State
 import qualified Data.Map.Strict as M
 
 type ValueMap = M.Map String Type
+type CtorMap = M.Map String ([Type], String)
 
-data Context = Context { getVars :: ValueMap } deriving (Show,Eq)
+data Context = Context { getVars :: ValueMap, getCtors :: CtorMap } deriving (Show,Eq)
 type ContextState a = StateT Context Maybe a 
-
-
-t0 = EBoolLit False
-t1 = EIntLit 1
-t2 = ECharLit 'a'
 
 isBool :: Expr -> ContextState Type
 isBool e = do
@@ -110,7 +106,7 @@ eval (ELet (n, x) y) = do
   withVar n t1 $ eval y
 
 eval (ELetRec f (x, tx) (y, ty) e) = do
-  ytype <- withVars [(x, tx), (f, TArrow tx ty)] $ eval y
+  ytype <- withVars (M.fromList [(x, tx), (f, TArrow tx ty)]) $ eval y
   if ytype == ty
     then withVar f (TArrow tx ty) $ eval e
     else lift Nothing
@@ -127,20 +123,29 @@ eval (EApply x y) = do
         else lift Nothing
     _ -> lift Nothing
 
-eval _ = undefined
+eval (ECase e0 pes) = do
+  let (ps, es) = unzip pes
+  env <- get
+  t0 <- eval e0
+  vars <- lift $ mapM (\p -> matchPattern p t0 (getCtors env)) ps
+  types <- zipWithM (\v e -> withVars v $ eval e) vars es
+  if and $ map (== head types) (tail types) then
+    return $ head types
+  else
+    lift Nothing
 
 withVar :: String -> Type -> ContextState a -> ContextState a
 withVar n t op = do
   env <- get
-  modify $ Context . M.insert n t . getVars
+  modify $ \x -> x { getVars = M.insert n t $ getVars x }
   r <- op
   put env
   return r
 
-withVars :: [(String, Type)] -> ContextState a -> ContextState a
+withVars :: M.Map String Type -> ContextState a -> ContextState a
 withVars vars op = do
   env <- get
-  modify $ Context . M.union (M.fromList vars) . getVars
+  modify $ \x -> x { getVars = M.union vars $ getVars x }
   r <- op
   put env
   return r
@@ -150,7 +155,38 @@ findVar n = do
   env <- get
   lift $ M.lookup n (getVars env)
 
+getADTTypes :: [ADT] -> M.Map String Type
+getADTTypes adts = M.fromList $ concat $ map adtToFuns adts
+  where adtToFuns (ADT name ctors) = map (ctorToFun name) ctors
+        ctorToFun name (param, types) = (param, foldr TArrow (TData name) types)
+
+getADTCtors :: [ADT] -> M.Map String ([Type], String)
+getADTCtors adts = M.fromList $ concat $ map adtToMap adts
+  where adtToMap (ADT name ctors) = map (ctorToMap name) ctors
+        ctorToMap name (param, types) = (param, (types, name))
+
+matchPattern :: Pattern -> Type -> M.Map String ([Type], String) -> Maybe (M.Map String Type)
+matchPattern p t ctors = case p of
+  PBoolLit _ -> case t of
+    TBool -> Just M.empty
+    _ -> Nothing
+  PIntLit _ -> case t of
+    TInt -> Just M.empty
+    _ -> Nothing
+  PCharLit _ -> case t of
+    TChar -> Just M.empty
+    _ -> Nothing
+  PVar x -> Just $ M.singleton x t
+  PData ctorName patterns -> case t of
+    TData dataName -> do
+      (types, dataName2) <- M.lookup ctorName ctors
+      when (dataName /= dataName2) Nothing
+      when (length patterns /= length types) Nothing
+      matches <- zipWithM (\p t -> matchPattern p t ctors) patterns types
+      return $ foldl (flip M.union) M.empty matches
+    _ -> Nothing
+  
 
 evalType :: Program -> Maybe Type
 evalType (Program adts body) = evalStateT (eval body) $
-  Context { getVars = M.empty }
+  Context { getVars = getADTTypes adts, getCtors = getADTCtors adts }

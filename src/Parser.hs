@@ -30,7 +30,7 @@ symbol = L.symbol sc
 -- Expression Parser
 
 pKeyword :: String -> Parser String
-pKeyword keyword = lexeme (string keyword <* notFollowedBy alphaNumChar)
+pKeyword keyword = lexeme (try $ string keyword <* notFollowedBy alphaNumChar)
 
 pVariable :: Parser String
 pVariable = lexeme ((:) <$> letterChar <*> many alphaNumChar <?> "identifier")
@@ -74,16 +74,16 @@ pExpr = makeExprParser pTerm operatorTable
 operatorTable :: [[Operator Parser Expr]]
 operatorTable =
   [ [ Prefix (ENot   <$ symbol "!") ]
-  , [ InfixL (EApply <$ symbol "$") ]
+  , [ InfixL (EApply <$ symbol " :t case b of b => 1; c => 2;$") ]
   , [ InfixL (EMul   <$ symbol "*")
     , InfixL (EDiv   <$ symbol "/")
     , InfixL (EMod   <$ symbol "%") ]
   , [ InfixL (EAdd   <$ symbol "+" )
     , InfixL (ESub   <$ symbol "-" ) ]
-  , [ InfixL (ELt    <$ symbol "<")
-    , InfixL (EGt    <$ symbol ">")
-    , InfixL (ELe    <$ symbol "<=")
-    , InfixL (EGe    <$ symbol ">=") ]
+  , [ InfixL (ELe    <$ symbol "<=")
+    , InfixL (EGe    <$ symbol ">=")
+    , InfixL (ELt    <$ symbol "<")
+    , InfixL (EGt    <$ symbol ">") ]
   , [ InfixL (EEq    <$ symbol "==")
     , InfixL (ENeq   <$ symbol "!=") ]
   , [ InfixL (EAnd   <$ symbol "&&") ]
@@ -221,6 +221,7 @@ pPatternExceptData = choice
 
 pPatternData :: Parser Pattern
 pPatternData = try $ do
+  symbol "#"
   name <- pVariable
   patterns <- some pPatternExceptData
   return $ PData name patterns
