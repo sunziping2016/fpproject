@@ -103,14 +103,16 @@ tRaw_02_ELambda_result = Right expr_Int_succ_bad
 tRaw_01_ELet_text = "let x = 1 in x + 1"
 tRaw_01_ELet_result = Right $ ELet ("x", (EIntLit 1)) (EAdd (EVar "x") (EIntLit 1))
 tRaw_02_ELet_text = "let succ = (\\x :: TInt => x+1) in succ 1"
-tRaw_02_ELet_result = Right $ expr_Int_succ
+tRaw_02_ELet_result = Right $ ELet ("succ", expr_Int_succ) (EAdd (EVar "x") (EIntLit 1))
 tRaw_01_ELetRec_text = "letrec x = \\x :: TInt => 1 :: TInt in x"
 tRaw_01_ELetRec_result = Right $ (ELetRec "x" ("x", TData "TInt") (EIntLit 1, TData "TInt") (EVar "x"))
 
 tRaw_01_ADT_text = "data Student = Student Int"
-tRaw_01_ADT_result = tRaw_01_ELetRec_result
+tRaw_01_ADT_result = Right $ ADT "Student" [("Student", [TInt])]
 tRaw_02_ADT_text = "data People = Student Int Char | Instructor Int Char"
-tRaw_02_ADT_result = Right expr_Int_succ
+tRaw_02_ADT_result = Right $ ADT "People" [("Student", [TInt, TChar]), ("Instructor", [TInt, TChar])]
+tRaw_03_ADT_text = "data people = student Int Char | instructor Int Char"
+tRaw_03_ADT_result = Right $ ADT "people" [("student", [TInt, TChar]), ("instructor", [TInt, TChar])]
 
 test_01_EBoolLit = assertEqual (parsePExpr tRaw_01_EBoolLit_text) tRaw_01_EBoolLit_result
 test_02_EBoolLit = assertEqual (parsePExpr tRaw_02_EBoolLit_text) tRaw_02_EBoolLit_result
@@ -154,4 +156,5 @@ test_01_ELet = assertEqual (parsePExpr tRaw_01_ELet_text) tRaw_01_ELet_result
 test_02_ELet = assertEqual (parsePExpr tRaw_02_ELet_text) tRaw_02_ELet_result
 test_01_ELetRec = assertEqual (parsePExpr tRaw_01_ELetRec_text) tRaw_01_ELetRec_result
 test_01_ADT = assertEqual (parsePADT tRaw_01_ADT_text) tRaw_01_ADT_result
-test_02_ADT = assertEqual (parsePExpr tRaw_02_ADT_text) tRaw_02_ADT_result
+test_02_ADT = assertEqual (parsePADT tRaw_02_ADT_text) tRaw_02_ADT_result
+test_03_ADT = assertEqual (parsePADT tRaw_03_ADT_text) tRaw_03_ADT_result
