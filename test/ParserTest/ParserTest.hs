@@ -13,6 +13,7 @@ testsWithTimeouts = wrap addTimeout htf_thisModulesTests
 main = htfMain testsWithTimeouts
 
 parsePExpr = parse (space *> pExpr <* eof) ""
+parsePADT = parse (space *> pADT <* eof) ""
 
 tRaw_01_EBoolLit_text = "True"
 tRaw_01_EBoolLit_result = Right $ EBoolLit True
@@ -88,7 +89,7 @@ tRaw_02_ECase_result = Right $
 tRaw_03_ECase_text = "case x of x1 => 1; x2 => 2; x3 => 3;"
 tRaw_03_ECase_result = Right $
   (ECase (EVar "x") [(PVar "x1", EIntLit 1), (PVar "x2", EIntLit 2), (PVar "x3", EIntLit 3)])
-tRaw_04_ECase_text = "case x of 'a' => 1; 'b' => 2; 'c' => 3;"
+tRaw_04_ECase_text = "case x of #a => 1; #b => 2; #c => 3;"
 tRaw_04_ECase_result = Right $
   (ECase (EVar "x") [(PCharLit 'a', EIntLit 1), (PCharLit 'b', EIntLit 2), (PCharLit 'c', EIntLit 3)])
 
@@ -101,11 +102,15 @@ tRaw_02_ELambda_result = Right expr_Int_succ_bad
 
 tRaw_01_ELet_text = "let x = 1 in x + 1"
 tRaw_01_ELet_result = Right $ ELet ("x", (EIntLit 1)) (EAdd (EVar "x") (EIntLit 1))
+tRaw_02_ELet_text = "let succ = (\\x :: TInt => x+1) in succ 1"
+tRaw_02_ELet_result = Right $ expr_Int_succ
 tRaw_01_ELetRec_text = "letrec x = \\x :: TInt => 1 :: TInt in x"
-tRaw_01_ELetRec_result = Right $ ELet ("x", (EIntLit 1)) (EAdd (EVar "x") (EIntLit 1))
+tRaw_01_ELetRec_result = Right $ (ELetRec "x" ("x", TData "TInt") (EIntLit 1, TData "TInt") (EVar "x"))
 
-tRaw_01_ADT_text = "data student = student TChar TInt"
-tRaw_01_ADT_result = Right expr_Int_succ_bad
+tRaw_01_ADT_text = "data Student = Student Int"
+tRaw_01_ADT_result = tRaw_01_ELetRec_result
+tRaw_02_ADT_text = "data People = Student Int Char | Instructor Int Char"
+tRaw_02_ADT_result = Right expr_Int_succ
 
 test_01_EBoolLit = assertEqual (parsePExpr tRaw_01_EBoolLit_text) tRaw_01_EBoolLit_result
 test_02_EBoolLit = assertEqual (parsePExpr tRaw_02_EBoolLit_text) tRaw_02_EBoolLit_result
@@ -142,9 +147,11 @@ test_02_EIf = assertEqual (parsePExpr tRaw_02_EIf_text) tRaw_02_EIf_result
 test_01_ECase = assertEqual (parsePExpr tRaw_01_ECase_text) tRaw_01_ECase_result
 test_02_ECase = assertEqual (parsePExpr tRaw_02_ECase_text) tRaw_02_ECase_result
 test_03_ECase = assertEqual (parsePExpr tRaw_03_ECase_text) tRaw_03_ECase_result
---test_04_ECase = assertEqual (parsePExpr tRaw_04_ECase_text) tRaw_04_ECase_result
+test_04_ECase = assertEqual (parsePExpr tRaw_04_ECase_text) tRaw_04_ECase_result
 test_01_ELambda = assertEqual (parsePExpr tRaw_01_ELambda_text) tRaw_01_ELambda_result
 test_02_ELambda = assertEqual (parsePExpr tRaw_02_ELambda_text) tRaw_02_ELambda_result
 test_01_ELet = assertEqual (parsePExpr tRaw_01_ELet_text) tRaw_01_ELet_result
+test_02_ELet = assertEqual (parsePExpr tRaw_02_ELet_text) tRaw_02_ELet_result
 test_01_ELetRec = assertEqual (parsePExpr tRaw_01_ELetRec_text) tRaw_01_ELetRec_result
-test_01_ADT = assertEqual (parsePExpr tRaw_01_ADT_text) tRaw_01_ADT_result
+test_01_ADT = assertEqual (parsePADT tRaw_01_ADT_text) tRaw_01_ADT_result
+test_02_ADT = assertEqual (parsePExpr tRaw_02_ADT_text) tRaw_02_ADT_result
