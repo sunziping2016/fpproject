@@ -89,23 +89,23 @@ tRaw_02_ECase_result = Right $
 tRaw_03_ECase_text = "case x of x1 => 1; x2 => 2; x3 => 3;"
 tRaw_03_ECase_result = Right $
   (ECase (EVar "x") [(PVar "x1", EIntLit 1), (PVar "x2", EIntLit 2), (PVar "x3", EIntLit 3)])
-tRaw_04_ECase_text = "case x of #a => 1; #b => 2; #c => 3;"
+tRaw_04_ECase_text = "case x of #a => 1; #b => 2; #c d => 3;"
 tRaw_04_ECase_result = Right $
-  (ECase (EVar "x") [(PCharLit 'a', EIntLit 1), (PCharLit 'b', EIntLit 2), (PCharLit 'c', EIntLit 3)])
+  (ECase (EVar "x") [(PData "a" [], EIntLit 1), (PData "b" [], EIntLit 2), (PData "c" [PVar "d"], EIntLit 3)])
 
-expr_Int_succ = ELambda ("x", TData "TInt") (EAdd (EVar "x") (EIntLit 1))
+expr_Int_succ = ELambda ("x", TInt) (EAdd (EVar "x") (EIntLit 1))
 expr_Int_succ_bad = ELambda ("x",TData "TBool") (EAdd (EVar "x") (EIntLit 1))
-tRaw_01_ELambda_text = "\\x :: TInt => x+1"
+tRaw_01_ELambda_text = "\\x :: Int => x+1"
 tRaw_01_ELambda_result = Right expr_Int_succ
 tRaw_02_ELambda_text = "\\x :: TBool => x+1"
 tRaw_02_ELambda_result = Right expr_Int_succ_bad
 
 tRaw_01_ELet_text = "let x = 1 in x + 1"
 tRaw_01_ELet_result = Right $ ELet ("x", (EIntLit 1)) (EAdd (EVar "x") (EIntLit 1))
-tRaw_02_ELet_text = "let succ = (\\x :: TInt => x+1) in succ 1"
-tRaw_02_ELet_result = Right $ ELet ("succ", expr_Int_succ) (EAdd (EVar "x") (EIntLit 1))
-tRaw_01_ELetRec_text = "letrec x = \\x :: TInt => 1 :: TInt in x"
-tRaw_01_ELetRec_result = Right $ (ELetRec "x" ("x", TData "TInt") (EIntLit 1, TData "TInt") (EVar "x"))
+tRaw_02_ELet_text = "let succ = (\\x :: Int => x+1) in succ $ 1"
+tRaw_02_ELet_result = Right $ ELet ("succ", expr_Int_succ) (EApply (EVar "succ") (EIntLit 1))
+tRaw_01_ELetRec_text = "letrec x = \\x :: Int => 1 :: Int in x"
+tRaw_01_ELetRec_result = Right $ (ELetRec "x" ("x", TInt) (EIntLit 1, TInt) (EVar "x"))
 
 tRaw_01_ADT_text = "data Student = Student Int"
 tRaw_01_ADT_result = Right $ ADT "Student" [("Student", [TInt])]
