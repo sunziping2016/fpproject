@@ -4,9 +4,9 @@ module EvalValue
 
 import AST
 import Control.Monad.State
+import Data.List
 import qualified Data.Map.Strict as M
 import Prelude hiding (getChar)
-import Debug.Trace
 
 data Value
   = VBool Bool
@@ -14,6 +14,7 @@ data Value
   | VChar Char
   | VClosure Context String Expr
   | VFun String Context String Expr
+  | VAdtFun String [Value] Int
   deriving (Show, Eq)
 
 type ValueMap = M.Map String Value
@@ -170,8 +171,16 @@ eval (EApply e1 e2) = do
       withAltCtx (Context . M.insert n p . getVars $ env) $ eval b
     VFun nf env np b ->
       withAltCtx (Context . M.insert np p . M.insert nf f. getVars $ env) $ eval b
+    VAdtFun n vs i ->
+      return $ VAdtFun n (vs ++ [p]) (i - 1)
     _ -> lift Nothing
-eval _ = undefined
+eval (ECase e0 pes) = do
+  let (ps, es) = unzip pes
+  v0 <- eval e0
+  let matches = map (\p -> matchPattern p v0) ps
+  index <- lift $ findIndex (/= Nothing) matches
+  match <- lift $ matches !! index
+  withVars match $ eval (es !! index)
 
 withAltCtx :: Context -> ContextState a -> ContextState a
 withAltCtx c op = do
@@ -183,10 +192,18 @@ withAltCtx c op = do
 
 withVar :: String -> Value -> ContextState a -> ContextState a
 withVar n v op = do
-  env <- get --save current state
-  modify $ Context . M.insert n v . getVars
+  env <- get
+  modify $ \x -> x { getVars = M.insert n v $ getVars x }
   r <- op
-  put env -- recover state
+  put env
+  return r
+
+withVars :: M.Map String Value -> ContextState a -> ContextState a
+withVars vars op = do
+  env <- get
+  modify $ \x -> x { getVars = M.union vars $ getVars x }
+  r <- op
+  put env
   return r
 
 findVar :: String -> ContextState Value
@@ -194,9 +211,34 @@ findVar n = do
   env <- get
   lift $ M.lookup n (getVars env)
 
+getADTCtors :: [ADT] -> M.Map String Value
+getADTCtors adts = M.fromList $ concat $ map adtToMap adts
+  where adtToMap (ADT name ctors) = map (ctorToMap name) ctors
+        ctorToMap name (param, types) = (param, VAdtFun param [] (length types))
+
 evalProgram :: Program -> Maybe Value
 evalProgram (Program adts body) = evalStateT (eval body) $
-  Context { getVars = M.empty }
+  Context { getVars = getADTCtors adts }
+
+matchPattern :: Pattern -> Value -> Maybe (M.Map String Value)
+matchPattern p v = case p of
+  PBoolLit b1 -> case v of
+    VBool b2 -> if b1 == b2 then Just M.empty else Nothing
+    _ -> Nothing
+  PIntLit i1 -> case v of
+    VInt i2 -> if i1 == i2 then Just M.empty else Nothing
+    _ -> Nothing
+  PCharLit c1 -> case v of
+    VChar c2 -> if c1 == c2 then Just M.empty else Nothing
+    _ -> Nothing
+  PVar x -> Just $ M.singleton x v
+  PData n1 patterns -> case v of
+    VAdtFun n2 values 0 -> do
+      when (n1 /= n2) Nothing
+      when (length patterns /= length values) Nothing
+      matches <- zipWithM (\p t -> matchPattern p t) patterns values
+      return $ foldl (flip M.union) M.empty matches
+    _ -> Nothing
 
 evalValue :: Program -> Result
 evalValue p = case evalProgram p of
