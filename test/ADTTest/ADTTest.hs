@@ -44,7 +44,7 @@ tRaw_04_CaseBool =
     (PVar "x", ENot $ ENot $ EVar "x")
   ]
 tRaw_04_CaseBool_type = Just TBool
-tRaw_04_CaseBool_value = RBool True
+tRaw_04_CaseBool_value = RBool False
 
 test_01_CaseBoolBadType_type = assertEqual tRaw_01_CaseBoolBadType_type (evalType tRaw_01_CaseBoolBadType)
 test_02_CaseBoolBadType_type = assertEqual tRaw_02_CaseBoolBadType_type (evalType tRaw_02_CaseBoolBadType)
