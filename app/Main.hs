@@ -31,14 +31,17 @@ doREPL = do
             Nothing -> putStrLn "Error"
         AEval expr -> lift $ do
           let program = Program adts expr
-          print program
           case evalValue program of
             RBool t -> print t
             RInt t -> print t
             RChar t -> print t
             RInvalid -> putStrLn "Error"
-        AADT adt@(ADT name _) -> do
+        AADT adt@(ADT name _) ->
           modify $ Context . M.insert name adt . getADTs
+        APrintADT -> lift $
+          mapM_ print adts
+        AParse expr -> lift $
+          print expr
 
 main :: IO ()
 main = evalStateT doREPL (Context { getADTs = M.empty })

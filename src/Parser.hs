@@ -243,6 +243,8 @@ data Action
   = AType Expr
   | AEval Expr
   | AADT ADT
+  | APrintADT
+  | AParse Expr
   deriving (Show, Eq)
 
 pActionType :: Parser Action
@@ -261,8 +263,21 @@ pActionEval = try $ do
   expr <- pExpr
   return $ AEval expr
 
+pActionPrintADT :: Parser Action
+pActionPrintADT = try $ do
+  pKeyword ":i"
+  return $ APrintADT
+
+pActionParse :: Parser Action
+pActionParse = try $ do
+  pKeyword ":p"
+  expr <- pExpr
+  return $ AParse expr
+
 pAction :: Parser Action
 pAction = choice
   [ pActionType
   , pActionADT
-  , pActionEval ]
+  , pActionEval
+  , pActionPrintADT
+  , pActionParse ]
